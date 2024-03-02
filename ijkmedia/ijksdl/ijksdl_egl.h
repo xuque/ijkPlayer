@@ -29,6 +29,11 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <EGL/eglplatform.h>
+
+#ifdef __ANDROID__
+#include <android/native_window.h>
+#endif
+
 #endif
 #include "ijksdl_class.h"
 

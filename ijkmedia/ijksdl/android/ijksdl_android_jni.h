@@ -55,6 +55,9 @@
 
 JavaVM *SDL_JNI_GetJvm();
 
+JNIEXPORT jint JNICALL SDL_JNI_OnLoad(JavaVM *vm, void *reserved);
+JNIEXPORT void JNICALL SDL_JNI_OnUnload(JavaVM *jvm, void *reserved);
+
 jint    SDL_JNI_SetupThreadEnv(JNIEnv **p_env);
 void    SDL_JNI_DetachThreadEnv();
 

@@ -6,3 +6,7 @@
 /build
 /captures
 android-ndk-prof
+
+# CMake
+ijkplayer-arm64/.cxx/*
+ijkplayer-arm64/build

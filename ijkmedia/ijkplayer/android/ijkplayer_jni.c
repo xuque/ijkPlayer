@@ -1127,10 +1127,6 @@ LABEL_RETURN:
     return;
 }
 
-
-
-
-
 // ----------------------------------------------------------------------------
 
 static JNINativeMethod g_methods[] = {
@@ -1184,6 +1180,7 @@ static JNINativeMethod g_methods[] = {
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
+    __android_log_print(ANDROID_LOG_INFO, "Hsu", "JNI OnLoad ijk player");
     JNIEnv* env = NULL;
 
     g_jvm = vm;
@@ -1191,6 +1188,12 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
         return -1;
     }
     assert(env != NULL);
+
+    // 因为把 sdl 和 ijkplayer 和成一个 so 了，不会调用 sdl 原本的 JNI_OnLoad，所以需在这里主动调用
+    jint result = SDL_JNI_OnLoad(vm, reserved);
+    if (result < 0) {
+        return result;
+    }
 
     pthread_mutex_init(&g_clazz.mutex, NULL );
 
@@ -1208,6 +1211,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved)
 
 JNIEXPORT void JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
+    __android_log_print(ANDROID_LOG_INFO, "Hsu", "JNI OnUnLoad");
     ijkmp_global_uninit();
 
     pthread_mutex_destroy(&g_clazz.mutex);
