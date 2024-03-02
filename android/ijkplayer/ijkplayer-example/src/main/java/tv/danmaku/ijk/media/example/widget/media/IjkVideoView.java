@@ -48,6 +48,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import tv.danmaku.ijk.media.example.log.IjkPlayerLog;
 import tv.danmaku.ijk.media.exo.IjkExoMediaPlayer;
 import tv.danmaku.ijk.media.player.AndroidMediaPlayer;
 import tv.danmaku.ijk.media.player.IMediaPlayer;
@@ -62,10 +63,13 @@ import tv.danmaku.ijk.media.example.R;
 import tv.danmaku.ijk.media.example.application.Settings;
 import tv.danmaku.ijk.media.example.services.MediaPlayerService;
 
+import static tv.danmaku.ijk.media.example.log.IjkPlayerLog.kLogTagVideoView;
+
 public class IjkVideoView extends FrameLayout implements MediaController.MediaPlayerControl {
     private String TAG = "IjkVideoView";
     // settable by the client
     private Uri mUri;
+    private String mManifestString;
     private Map<String, String> mHeaders;
 
     // all possible internal states
@@ -253,7 +257,12 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
      * @param path the path of the video.
      */
     public void setVideoPath(String path) {
-        setVideoURI(Uri.parse(path));
+        if (path.contains("adaptationSet")){
+            mManifestString = path;
+            setVideoURI(Uri.parse("ijklas:"));
+        } else {
+            setVideoURI(Uri.parse(path));
+        }
     }
 
     /**
@@ -301,8 +310,18 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         }
     }
 
-    @TargetApi(Build.VERSION_CODES.M)
+    public void setPlayerSpeed(float speed) {
+        try {
+            if (mMediaPlayer != null) {
+                mMediaPlayer.setPlaybackSpeed(speed);
+            }
+        } catch (Exception e) {
+            IjkPlayerLog.e(TAG, "set player speed failed, val: %f, e: %s", speed, e);
+        }
+    }
+
     private void openVideo() {
+        IjkPlayerLog.info(kLogTagVideoView, "open video");
         if (mUri == null || mSurfaceHolder == null) {
             // not ready for playback just yet, will try again later
             return;
@@ -312,13 +331,16 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         release(false);
 
         AudioManager am = (AudioManager) mAppContext.getSystemService(Context.AUDIO_SERVICE);
-        am.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        if (am == null) {
+            IjkPlayerLog.e(kLogTagVideoView, "get audio server failed");
+        } else {
+            am.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+        }
 
         try {
             mMediaPlayer = createPlayer(mSettings.getPlayer());
 
-            // TODO: create SubtitleController in MediaPlayer, but we need
-            // a context for the subtitle renderers
+            // TODO: create SubtitleController in MediaPlayer, but we need a context for the subtitle renderers
             final Context context = getContext();
             // REMOVED: SubtitleController
 
@@ -601,6 +623,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         @Override
         public void onTimedText(IMediaPlayer mp, IjkTimedText text) {
             if (text != null) {
+                IjkPlayerLog.i(TAG, "recv subtitle text: %s", text.getText());
                 subtitleDisplay.setText(text.getText());
             }
         }
@@ -683,6 +706,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
 
         @Override
         public void onSurfaceCreated(@NonNull IRenderView.ISurfaceHolder holder, int width, int height) {
+            IjkPlayerLog.i(kLogTagVideoView, "onSurfaceCreated, w: %d, h: %d", width, height);
             if (holder.getRenderView() != mRenderView) {
                 Log.e(TAG, "onSurfaceCreated: unmatched render callback\n");
                 return;
@@ -831,7 +855,6 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
         if (isInPlaybackState()) {
             return (int) mMediaPlayer.getDuration();
         }
-
         return -1;
     }
 
@@ -1017,17 +1040,16 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
     }
 
     public IMediaPlayer createPlayer(int playerType) {
+        IjkPlayerLog.info(kLogTagVideoView, "create player: %d", playerType);
         IMediaPlayer mediaPlayer = null;
 
         switch (playerType) {
             case Settings.PV_PLAYER__IjkExoMediaPlayer: {
-                IjkExoMediaPlayer IjkExoMediaPlayer = new IjkExoMediaPlayer(mAppContext);
-                mediaPlayer = IjkExoMediaPlayer;
+                mediaPlayer = new IjkExoMediaPlayer(mAppContext);
             }
             break;
             case Settings.PV_PLAYER__AndroidMediaPlayer: {
-                AndroidMediaPlayer androidMediaPlayer = new AndroidMediaPlayer();
-                mediaPlayer = androidMediaPlayer;
+                mediaPlayer = new AndroidMediaPlayer();
             }
             break;
             case Settings.PV_PLAYER__IjkMediaPlayer:
@@ -1035,8 +1057,13 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
                 IjkMediaPlayer ijkMediaPlayer = null;
                 if (mUri != null) {
                     ijkMediaPlayer = new IjkMediaPlayer();
-                    ijkMediaPlayer.native_setLogLevel(IjkMediaPlayer.IJK_LOG_DEBUG);
+                    IjkMediaPlayer.native_setLogLevel(IjkMediaPlayer.IJK_LOG_INFO);
 
+                    if (mManifestString != null) {
+                        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "iformat", "ijklas");
+                        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "find_stream_info", 0);
+                        ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "manifest_string", mManifestString);
+                    }
                     if (mSettings.getUsingMediaCodec()) {
                         ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "mediacodec", 1);
                         if (mSettings.getUsingMediaCodecAutoRotate()) {
@@ -1067,9 +1094,7 @@ public class IjkVideoView extends FrameLayout implements MediaController.MediaPl
                     }
                     ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "framedrop", 1);
                     ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_PLAYER, "start-on-prepared", 0);
-
                     ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_FORMAT, "http-detect-range-support", 0);
-
                     ijkMediaPlayer.setOption(IjkMediaPlayer.OPT_CATEGORY_CODEC, "skip_loop_filter", 48);
                 }
                 mediaPlayer = ijkMediaPlayer;

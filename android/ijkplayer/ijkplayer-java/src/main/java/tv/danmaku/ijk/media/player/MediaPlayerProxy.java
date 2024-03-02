@@ -158,6 +158,11 @@ public class MediaPlayerProxy implements IMediaPlayer {
     }
 
     @Override
+    public void setPlaybackSpeed(float speed) throws Exception {
+        mBackEndMediaPlayer.setPlaybackSpeed(speed);
+    }
+
+    @Override
     public int getAudioSessionId() {
         return mBackEndMediaPlayer.getAudioSessionId();
     }

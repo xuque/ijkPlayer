@@ -188,8 +188,10 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
                     libLoader = sLocalLibLoader;
 
                 libLoader.loadLibrary("ijkffmpeg");
-                libLoader.loadLibrary("ijksdl");
-                libLoader.loadLibrary("ijkplayer");
+                libLoader.loadLibrary("a4ijkplayer");
+//                libLoader.loadLibrary("ijkffmpeg");
+//                libLoader.loadLibrary("ijksdl");
+//                libLoader.loadLibrary("ijkplayer");
                 mIsLibLoaded = true;
             }
         }
@@ -567,8 +569,7 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
     public void setScreenOnWhilePlaying(boolean screenOn) {
         if (mScreenOnWhilePlaying != screenOn) {
             if (screenOn && mSurfaceHolder == null) {
-                DebugLog.w(TAG,
-                        "setScreenOnWhilePlaying(true) is ineffective without a SurfaceHolder");
+                DebugLog.w(TAG, "setScreenOnWhilePlaying(true) is ineffective without a SurfaceHolder");
             }
             mScreenOnWhilePlaying = screenOn;
             updateSurfaceScreenOn();
@@ -849,6 +850,9 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
 
     @Override
     public native void setVolume(float leftVolume, float rightVolume);
+
+    @Override
+    public native void setPlaybackSpeed(float speed);
 
     @Override
     public native int getAudioSessionId();

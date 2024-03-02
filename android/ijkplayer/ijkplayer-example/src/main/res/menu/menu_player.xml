@@ -4,6 +4,23 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".menu_app">
     <item
+        android:id="@+id/action_toggle_speed"
+        android:title="@string/toggle_speed"
+        app:showAsAction="ifRoom" >
+        <menu>
+            <item
+                android:id="@+id/action_speed_1.0"
+                android:title="@string/toggle_speed_1.0"/>
+            <item
+                android:id="@+id/action_speed_1.25"
+                android:title="@string/toggle_speed_1.25"/>
+            <item
+                android:id="@+id/action_speed_1.5"
+                android:title="@string/toggle_speed_1.5"/>
+        </menu>
+    </item>
+
+    <item
         android:id="@+id/action_toggle_player"
         android:title="@string/toggle_player"
         app:showAsAction="ifRoom" />

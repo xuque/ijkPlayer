@@ -23,6 +23,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaDataSource;
 import android.media.MediaPlayer;
+import android.media.PlaybackParams;
 import android.media.TimedText;
 import android.net.Uri;
 import android.os.Build;
@@ -280,6 +281,15 @@ public class AndroidMediaPlayer extends AbstractMediaPlayer {
     @Override
     public void setVolume(float leftVolume, float rightVolume) {
         mInternalMediaPlayer.setVolume(leftVolume, rightVolume);
+    }
+
+    @Override
+    public void setPlaybackSpeed(float speed) throws Exception {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            PlaybackParams params = mInternalMediaPlayer.getPlaybackParams();
+            params.setSpeed(speed);
+            mInternalMediaPlayer.setPlaybackParams(params);
+        }
     }
 
     @Override

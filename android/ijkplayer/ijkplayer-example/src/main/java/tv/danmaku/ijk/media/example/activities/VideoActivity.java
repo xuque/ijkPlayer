@@ -38,6 +38,7 @@ import android.view.ViewGroup;
 import android.widget.TableLayout;
 import android.widget.TextView;
 
+import tv.danmaku.ijk.media.example.log.IjkPlayerLog;
 import tv.danmaku.ijk.media.player.IjkMediaPlayer;
 import tv.danmaku.ijk.media.player.misc.ITrackInfo;
 import tv.danmaku.ijk.media.example.R;
@@ -63,6 +64,7 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
 
     private Settings mSettings;
     private boolean mBackPressed;
+    private boolean mUseFastForward = true;
 
     public static Intent newIntent(Context context, String videoPath, String videoTitle) {
         Intent intent = new Intent(context, VideoActivity.class);
@@ -95,18 +97,18 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
                 if (Build.VERSION.SDK_INT < Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
                     String scheme = mVideoUri.getScheme();
                     if (TextUtils.isEmpty(scheme)) {
-                        Log.e(TAG, "Null unknown scheme\n");
+                        IjkPlayerLog.e(TAG, "Null unknown scheme\n");
                         finish();
                         return;
                     }
                     if (scheme.equals(ContentResolver.SCHEME_ANDROID_RESOURCE)) {
                         mVideoPath = mVideoUri.getPath();
                     } else if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
-                        Log.e(TAG, "Can not resolve content below Android-ICS\n");
+                        IjkPlayerLog.e(TAG, "Can not resolve content below Android-ICS\n");
                         finish();
                         return;
                     } else {
-                        Log.e(TAG, "Unknown scheme " + scheme + "\n");
+                        IjkPlayerLog.e(TAG, "Unknown scheme " + scheme + "\n");
                         finish();
                         return;
                     }
@@ -123,7 +125,7 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
         setSupportActionBar(toolbar);
 
         ActionBar actionBar = getSupportActionBar();
-        mMediaController = new AndroidMediaController(this, false);
+        mMediaController = new AndroidMediaController(this, mUseFastForward);
         mMediaController.setSupportActionBar(actionBar);
 
         mToastTextView = (TextView) findViewById(R.id.toast_text_view);
@@ -135,7 +137,8 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
 
         // init player
         IjkMediaPlayer.loadLibrariesOnce(null);
-        IjkMediaPlayer.native_profileBegin("libijkplayer.so");
+//        IjkMediaPlayer.native_profileBegin("libijkplayer.so");
+        IjkMediaPlayer.native_profileBegin("liba4ijkplayer.so");
 
         mVideoView = (IjkVideoView) findViewById(R.id.video_view);
         mVideoView.setMediaController(mMediaController);
@@ -146,7 +149,7 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
         else if (mVideoUri != null)
             mVideoView.setVideoURI(mVideoUri);
         else {
-            Log.e(TAG, "Null Data Source\n");
+            IjkPlayerLog.e(TAG, "Null Data Source\n");
             finish();
             return;
         }
@@ -219,6 +222,12 @@ public class VideoActivity extends AppCompatActivity implements TracksFragment.I
                 transaction.commit();
                 mDrawerLayout.openDrawer(mRightDrawer);
             }
+        } else if (id == R.id.action_speed_1_0) {
+            mVideoView.setPlayerSpeed(1.0f);
+        } else if (id == R.id.action_speed_1_25) {
+            mVideoView.setPlayerSpeed(1.25f);
+        } else if (id == R.id.action_speed_1_5) {
+            mVideoView.setPlayerSpeed(1.5f);
         }
 
         return super.onOptionsItemSelected(item);

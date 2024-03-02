@@ -250,6 +250,10 @@ public class IjkExoMediaPlayer extends AbstractMediaPlayer {
         // TODO: no support
     }
 
+    @Override
+    public void setPlaybackSpeed(float speed) throws Exception {
+        // TODO: no support
+    }
 
     @Override
     public int getAudioSessionId() {
